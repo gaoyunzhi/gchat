@@ -4,7 +4,7 @@ import sleekxmpp, logging, sys
 logging.basicConfig()
 sys.setdefaultencoding('utf8') #@UndefinedVariable
     
-class EchoBot : 
+class Chat(object): 
     def __init__(self, jid, password) : 
         self.xmpp = sleekxmpp.ClientXMPP(jid, password) 
         self.xmpp.add_event_handler("session_start", self.handleXMPPConnected) 
@@ -18,11 +18,18 @@ class EchoBot :
         self.xmpp.sendPresence()
         
     def handleIncomingMessage(self, message):
-        print 'here'
-        print dict(message)
-        self.xmpp.sendMessage(message["from"], message["body"], mtype="chat")
-        # set mtype = chat to let gchat save history 
+        self.model.handleIncomingMessage(message)
+        
+    def sendChat(self, message):
+        self.xmpp.sendMessage(message["to"], message["body"], mtype="chat")
+        # set mtype = chat to let gchat save history
+        
+    def addUI(self, ui):
+        self.ui = ui
+        
+    def addModel(self, model):
+        self.model = model
         
 if __name__ == '__main__':
-    bot = EchoBot(USER, PD)
+    bot = Chat(USER, PD)
     bot.run()
