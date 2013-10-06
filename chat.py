@@ -18,8 +18,10 @@ class EchoBot :
         self.xmpp.sendPresence()
         
     def handleIncomingMessage(self, message):
+        print 'here'
         print dict(message)
-        self.xmpp.sendMessage(message["from"], message["body"]) 
+        self.xmpp.sendMessage(message["from"], message["body"], mtype="chat")
+        # set mtype = chat to let gchat save history 
         
 if __name__ == '__main__':
     bot = EchoBot(USER, PD)
