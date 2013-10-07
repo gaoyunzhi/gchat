@@ -50,18 +50,21 @@ class UI(object):
             if self.bufferMessage.valid_message():
                 self.__send_message()
                 self.bufferMessage.empty_body()
+            if not self.bufferMessage.has_receiver():
+                self.bufferMessage.set_receiver(self.model.get_receiver(UP))
+                # not sure this is the right behavior
         else:
             self.receiver_editing_mode = False
             
-    def self.__arrow_pressed(self):
+    def __arrow_pressed(self):
         arrow_key = ord(msvcrt.getwch())
         key = 0
-        if arrow_key == 80:
+        if arrow_key == 72:
             key = UP
-        elif arrow_key == 72:
+        elif arrow_key == 80:
             key = DOWN
         if key != 0:
-            self.__set_receiver(key):
+            self.__set_receiver(key)
 
     def __send_message(self):
         self.model.send_message(self.bufferMessage)

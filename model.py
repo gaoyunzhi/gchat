@@ -5,6 +5,8 @@ from chat import Chat
 from secret import USER, PD
 import time
 
+# TODO: issue: empty receiver saved
+
 NUMBER_RANGE = xrange(1,9)
 MAX_RECIEVER_LIST_LEN = 50
 
@@ -20,7 +22,7 @@ class Model(object):
         self.bot.run()
         self.receiver_list = []
         self.random_counter = -1
-        self.reciever_index = 0
+        self.receiver_index = 0
     
     def addUI(self, ui):
         self.ui = ui
@@ -30,14 +32,15 @@ class Model(object):
         body_field = message["body"]
         email = from_field.bare 
         alias = from_field.user
+        if email not in self.receiver_list:
+            self.receiver_list.append(email)
+        
         self.__register_email(email, alias)
         buddy_number = self.email_to_number[email]
         message_to_show = beautify_incoming_message(alias, buddy_number, body_field)
         # TODO: need to refactor alias, buddy_number, body_field to a class or something
         self.ui.showMessage(message_to_show)
         self.show_composing_message(self.ui.bufferMessage)
-        if email not in self.receiver_list:
-            self.receiver_list.apend(email)
         
     def __register_email(self, email, alias):
         if email not in self.email_to_alias:
@@ -68,23 +71,24 @@ class Model(object):
         del self.email_to_number[email]
 
     def get_receiver(self, up_or_down):
-        self.reciever_index += up_or_down
-        if self.reciever_index < 0: self.reciever_index = 0
-        if len(self.receiver_list) <= self.reciever_index:
+        self.receiver_index += up_or_down
+        if self.receiver_index < 0: 
+            self.receiver_index = 0
+        if len(self.receiver_list) <= self.receiver_index:
             self.receiver_list.append(self.get_any_receiver())
         self.__clean_receiver_list()
-        return self.receiver_list[self.reciever_index]
+        return self.receiver_list[self.receiver_index]
     
     def insert_receiver(self, email):
-        if self.receiver_list[self.reciever_index] != email:
+        if self.receiver_list[self.receiver_index] != email:
             self.receiver_index +=1
-            self.receiver_list = self.receiver_list[:self.reciever_index] + [email] + \
-                                 self.receiver_list[self.reciever_index:]
+            self.receiver_list = self.receiver_list[:self.receiver_index] + [email] + \
+                                 self.receiver_list[self.receiver_index:]
         self.__clean_receiver_list()
         
     def __clean_receiver_list(self):
-        if self.reciever_index > MAX_RECIEVER_LIST_LEN:
-            self.reciever_index -= MAX_RECIEVER_LIST_LEN/2
+        if self.receiver_index > MAX_RECIEVER_LIST_LEN:
+            self.receiver_index -= MAX_RECIEVER_LIST_LEN/2
             self.receiver_list = self.receiver_list[MAX_RECIEVER_LIST_LEN/2:]
 
     def get_any_receiver(self):
@@ -97,10 +101,10 @@ class Model(object):
         email = bufferMessage.get_receiver()
         buddy_number = self.email_to_number[email]
         alias = self.email_to_alias[email]
-        body_field = bufferMessage.get_message()
+        body_field = bufferMessage.get_body()
         message_to_show = beautify_outgoing_message(alias, buddy_number, body_field)
         self.ui.showMessage(message_to_show)
-        self.bot.sendChat(bufferMessage.get_xmpp_message())
+        self.bot.sendChat(bufferMessage)
         
     def get_email_from_number(self, number):
         if number in self.number_to_email:
@@ -109,11 +113,8 @@ class Model(object):
     
     def show_composing_message(self, bufferMessage):
         email = bufferMessage.get_receiver()
-        self.__register_email(email, email.split('@')[0])
-        alias = self.email_to_alias[email]
-        buddy_number = self.email_to_number[email]
-        body_field = bufferMessage.get_message()
+        alias = self.email_to_alias.get(email, email.split('@')[0])
+        buddy_number = self.email_to_number.get(email, 0)
+        body_field = bufferMessage.get_body()
         message_to_show = beautify_composing_message(alias, buddy_number, body_field)
         self.ui.showMessage(message_to_show)
-        
-        
