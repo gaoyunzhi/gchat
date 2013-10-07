@@ -21,11 +21,8 @@ class Chat(object):
         self.model.handleIncomingMessage(message)
         
     def sendChat(self, message):
-        self.xmpp.sendMessage(message["to"], message["body"], mtype="chat")
+        self.xmpp.sendMessage(message.get_receiver(), message.get_body(), mtype="chat")
         # set mtype = chat to let gchat save history
-        
-    def addUI(self, ui):
-        self.ui = ui
         
     def addModel(self, model):
         self.model = model
