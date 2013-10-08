@@ -1,14 +1,18 @@
 # -*- coding: utf8 -*-
 from util import beautify_incoming_message, beautify_outgoing_message, \
-    beautify_composing_message # TODO: this three methods may need to change
+    beautify_composing_message # TODO: this three methods may need to change (priority: low)
+from util import default_alias_from_email
 from chat import Chat
 from secret import USER, PD
 import time
 
-# TODO: issue: empty receiver saved
-
 NUMBER_RANGE = xrange(1,9)
 MAX_RECIEVER_LIST_LEN = 50
+HELP_MESSAGE = "use F1 - F8 for users that has a number, e.g. if you see '(5)bajie90=>hello'," + \
+               " you can reply bajie90 by pressing F5. use F9 to manually edit receiver field," + \
+               " enter to end editing message. If you are typing the message itself, enter to" + \
+               " send the message. In the message, press F10 to see this help message again," + \
+               " press F12 to quit the window. Email bajie90 at gmail to report bugs.\n"
 
 class Model(object):
     def __init__(self):
@@ -17,15 +21,17 @@ class Model(object):
         self.email_to_most_recent_time_used = {}
         self.email_to_alias = {} # TODO: import buddy list to get alias (priority: low)
         self.emails = []
-        self.bot = Chat(USER, PD)
-        self.bot.addModel(self)
-        self.bot.run()
         self.receiver_list = []
         self.random_counter = -1
-        self.receiver_index = 0
+        self.receiver_index = -1
     
     def addUI(self, ui):
         self.ui = ui
+        
+    def addBot(self):
+        self.bot = Chat(USER, PD)
+        self.bot.addModel(self)
+        self.bot.run()
     
     def handleIncomingMessage(self, message):
         from_field = message["from"]
@@ -38,8 +44,9 @@ class Model(object):
         self.__register_email(email, alias)
         buddy_number = self.email_to_number[email]
         message_to_show = beautify_incoming_message(alias, buddy_number, body_field)
-        # TODO: need to refactor alias, buddy_number, body_field to a class or something
+        # TODO: need to refactor alias, buddy_number, body_field to a class or something (priority: low)
         self.ui.showMessage(message_to_show)
+        self.ui.set_current_receiver()
         self.show_composing_message(self.ui.bufferMessage)
         
     def __register_email(self, email, alias):
@@ -60,7 +67,7 @@ class Model(object):
         self.email_to_number[email] = number
         self.number_to_email[number] = email
     
-    def __pop_oldest_used_indexnumber(self):
+    def __pop_oldest_used_indexnumber(self): # untested
         number, min_last_used_time = 0, 1e10
         for i in NUMBER_RANGE:
             last_used_time = self.email_to_most_recent_time_used[self.number_to_email[i]]
@@ -99,6 +106,7 @@ class Model(object):
     
     def send_message(self, bufferMessage):
         email = bufferMessage.get_receiver()
+        self.__register_email(email, default_alias_from_email(email))
         buddy_number = self.email_to_number[email]
         alias = self.email_to_alias[email]
         body_field = bufferMessage.get_body()
@@ -113,8 +121,12 @@ class Model(object):
     
     def show_composing_message(self, bufferMessage):
         email = bufferMessage.get_receiver()
-        alias = self.email_to_alias.get(email, email.split('@')[0])
         buddy_number = self.email_to_number.get(email, 0)
         body_field = bufferMessage.get_body()
-        message_to_show = beautify_composing_message(alias, buddy_number, body_field)
+        message_to_show = beautify_composing_message(email, buddy_number, body_field)
         self.ui.showMessage(message_to_show)
+        
+    def show_help_message(self):
+        self.ui.showMessage(HELP_MESSAGE)
+        self.show_composing_message(self.ui.bufferMessage)
+        # still need to think about this, the updation of bufferMessage

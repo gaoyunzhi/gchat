@@ -1,11 +1,18 @@
 ''' util for model '''
-CLEAR_LINE = '\r'+' '*100+'\r'
+LINE_LEN = 79
+CLEAR_LINE = '\r'+' '*LINE_LEN+'\r'
+DEFAULT_EMAIL_ENDING = "@gmail.com"
+
+def custom_rjust(text):
+    supposed_just = LINE_LEN
+    supposed_just -= sum([1 for x in text if ord(x)>255])
+    return text.rjust(supposed_just)
 
 def beautify_incoming_message(alias, buddy_number,  message):
     return CLEAR_LINE+'('+str(buddy_number)+')'+alias+'=>'+message.strip()+'\n'
 
 def beautify_outgoing_message(alias, buddy_number,  message):
-    return CLEAR_LINE+('('+str(buddy_number)+')'+alias+'<='+message.strip()).rjust(50)+'\n'
+    return CLEAR_LINE+custom_rjust('('+str(buddy_number)+')'+alias+'<='+message.strip())+'\n'
 
 def beautify_composing_message(alias, buddy_number, message):
     return CLEAR_LINE+' '*5+'composing:'+'('+str(buddy_number)+')'+alias+'<--'+message.strip()
@@ -13,7 +20,10 @@ def beautify_composing_message(alias, buddy_number, message):
 def to_email(text):
     if '@' in text:
         return text
-    return text + '@gmail.com'
+    return text + DEFAULT_EMAIL_ENDING
+
+def default_alias_from_email(email):
+    return email.split('@')[0]
 
 ''' util for ui '''  
 class BufferText(object):
@@ -26,7 +36,7 @@ class BufferText(object):
         elif ord(key) == 27: # ESC
             self.text = []
         else:
-            self.text.append(key)
+            self.text.append(key) 
             
     def has_text(self):
         return self.text != []

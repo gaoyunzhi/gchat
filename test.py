@@ -1,4 +1,4 @@
-import msvcrt
+import msvcrt, sys, time
 
 while True:
     if msvcrt.kbhit():
